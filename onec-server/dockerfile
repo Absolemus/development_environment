@@ -1,0 +1,16 @@
+FROM mcr.microsoft.com/windows/server:ltsc2022
+
+COPY ./distr /distr
+
+WORKDIR /distr/onec
+RUN  Start-Process -Wait -FilePath "./1CEnterprise 8 (x86-64).msi" /qn TRANSFORMS=adminstallrelogon.mst;1049.mst \
+    DESIGNERALLCLIENTS=1 \
+    THICKCLIENT=0 \
+    THINCLIENTFILE=0 \
+    THINCLIENT=0 \
+    WEBSERVEREXT=1 \
+    SERVER=1 \
+    CONFREPOSSERVER=1 \
+    CONVERTER77=1 \
+    SERVERCLIENT=1 \
+    LANGUAGES=RU 
