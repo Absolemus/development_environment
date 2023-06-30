@@ -1,16 +1,18 @@
-FROM mcr.microsoft.com/windows/server:ltsc2022
+FROM mcr.microsoft.com/windows:ltsc2019
 
-COPY ./distr /distr
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-WORKDIR /distr/onec
-RUN  Start-Process -Wait -FilePath "./1CEnterprise 8 (x86-64).msi" /qn TRANSFORMS=adminstallrelogon.mst;1049.mst \
-    DESIGNERALLCLIENTS=1 \
-    THICKCLIENT=0 \
-    THINCLIENTFILE=0 \
-    THINCLIENT=0 \
-    WEBSERVEREXT=1 \
-    SERVER=1 \
-    CONFREPOSSERVER=1 \
-    CONVERTER77=1 \
-    SERVERCLIENT=1 \
-    LANGUAGES=RU 
+EXPOSE 1540-1541
+EXPOSE 1560-1591
+
+COPY ./1CEStart C:/ProgramData/1C/1CEStart
+COPY ./distr C:/distr
+COPY start.bat C:/start.bat
+COPY sqlncli.msi C:/sqlncli.msi
+COPY 20230629142409.lic C:/ProgramData/1C/licenses/20230629142409.lic
+
+RUN Start-Process -Wait C:\distr\setup.exe /S
+
+# RUN Start-Process -Wait sqlncli.msi /qr IACCEPTSQLNCLILICENSETERMS=YES
+
+CMD & 'C:\Program Files\1cv8\8.3.23.1437\Bin\ragent.exe' -agent -regport 1541 -port 1540 -range 1560:1591 -debug -d 'C:\Program Files\1cv8\srvinfo'

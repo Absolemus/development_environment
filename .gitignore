@@ -1,4 +1,6 @@
 
 onec-server/distr/*
-sql-server/*.box
-sql-server/*.exe
+*.box
+*.exe
+*.lic
+*.msi

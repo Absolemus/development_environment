@@ -6,30 +6,28 @@
 
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
-ENV sa_password="password" \
-    attach_dbs="[]" \
-    ACCEPT_EULA="Y" \
-    sa_password_path="C:\ProgramData\Docker\secrets\sa-password"
+ENV SA_PASSWORD="" \
+    ATTACH_DBS="[]" \
+    SA_PASSWORD_PATH="" \
+    -ACCEPT_EULA="Y"
+
+EXPOSE 9433:1433
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-# make install files accessible
-COPY start.ps1 /
-COPY SQLServer2019-DEV-x64-ENU.box /
-COPY SQLServer2019-DEV-x64-ENU.exe /
-COPY SQLServer2019-DEV-x64-ENU /
+COPY . /distr
 
-WORKDIR /
+WORKDIR /distr
 
-RUN Start-Process -Wait -FilePath .\SQLServer2019-DEV-x64-ENU.exe -ArgumentList /qs, /x:setup ; \
+RUN Start-Process -Wait -FilePath .\SQLServer2022-DEV-x64-ENU.exe -ArgumentList /qs, /x:setup ; \
         .\setup\setup.exe /q /ACTION=Install /INSTANCENAME=MSSQLSERVER /FEATURES=SQLEngine /UPDATEENABLED=0 /SQLSVCACCOUNT='NT AUTHORITY\NETWORK SERVICE' /SQLSYSADMINACCOUNTS='BUILTIN\ADMINISTRATORS' /TCPENABLED=1 /NPENABLED=0 /IACCEPTSQLSERVERLICENSETERMS ; \
-        Remove-Item -Recurse -Force SQLServer2019-DEV-x64-ENU.exe, SQLServer2019-DEV-x64-ENU.box, setup
+        Remove-Item -Recurse -Force SQLServer2022-DEV-x64-ENU.exe, SQLServer2022-DEV-x64-ENU.box, setup
 
 RUN stop-service MSSQLSERVER ; \
-        set-itemproperty -path 'HKLM:\software\microsoft\microsoft sql server\mssql15.MSSQLSERVER\mssqlserver\supersocketnetlib\tcp\ipall' -name tcpdynamicports -value '' ; \
-        set-itemproperty -path 'HKLM:\software\microsoft\microsoft sql server\mssql15.MSSQLSERVER\mssqlserver\supersocketnetlib\tcp\ipall' -name tcpport -value 1433 ; \
-        set-itemproperty -path 'HKLM:\software\microsoft\microsoft sql server\mssql15.MSSQLSERVER\mssqlserver\' -name LoginMode -value 2 ;
+        set-itemproperty -path 'HKLM:\software\microsoft\microsoft sql server\mssql16.MSSQLSERVER\mssqlserver\supersocketnetlib\tcp\ipall' -name tcpdynamicports -value '' ; \
+        set-itemproperty -path 'HKLM:\software\microsoft\microsoft sql server\mssql16.MSSQLSERVER\mssqlserver\supersocketnetlib\tcp\ipall' -name tcpport -value 1433 ; \
+        set-itemproperty -path 'HKLM:\software\microsoft\microsoft sql server\mssql16.MSSQLSERVER\mssqlserver\' -name LoginMode -value 2 ;
 
 HEALTHCHECK CMD [ "sqlcmd", "-Q", "select 1" ]
 
-CMD .\start -sa_password $env:sa_password -ACCEPT_EULA $env:ACCEPT_EULA -attach_dbs \"$env:attach_dbs\" -Verbose
+CMD .\start -sa_password $env:SA_PASSWORD -ACCEPT_EULA $env:ACCEPT_EULA -ATTACH_DBS \"$env:attach_dbs\" -Verbose
